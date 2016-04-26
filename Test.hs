@@ -12,14 +12,14 @@
 -- Os 2 alunos do grupo devem também indentificar-se nos comentários abaixo.
 --
 -- Aluno 1
--- Número:
--- Nome:
--- Curso:
+-- Número: A73831
+-- Nome: João Pires Barreira
+-- Curso: MIEI
 --
 -- Aluno 2
--- Número:
--- Nome:
--- Curso:
+-- Número: A61855
+-- Nome: Ana Paula Carvalho
+-- Curso: MIEI
 --
 
 
@@ -78,7 +78,7 @@ g6 = Graph {nodes = fromList [6,7,8,9],
 
 -- Deriving Eq
 test_eq1 :: Test
-test_eq1 = g1 == g1' ~?= True
+test_eq1 = g1 == g1 ~?= True
 
 test_eq2 :: Test
 test_eq2 = g1 == g2 ~?= False
@@ -92,7 +92,7 @@ test_isEmpty1 :: Test
 test_isEmpty1 = isEmpty g1 ~?= False
 
 test_isEmpty2 :: Test
-test_isEmpty2 = isEmpty $ Graph {nodes = Set.empty, edges = Set.empty} ~?= True
+test_isEmpty2 = isEmpty (Graph {nodes = Set.empty, edges = Set.empty}) ~?= True
 
 -- isValid
 test_isValid1 :: Test
