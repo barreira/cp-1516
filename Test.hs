@@ -76,6 +76,12 @@ g6 = Graph {nodes = fromList [6,7,8,9],
             edges = fromList [Edge 6 7, Edge 7 8, Edge 8 9]
            }
 
+g7 :: Graph Int
+g7 = Graph {nodes = fromList [1,2,3],
+            edges = fromList [Edge 1 2, Edge 2 3]
+           }
+
+
 -- Deriving Eq
 test_eq1 :: Test
 test_eq1 = g1 == g1 ~?= True
@@ -123,14 +129,42 @@ test_isSubgraphOf2 :: Test
 test_isSubgraphOf2 = isSubgraphOf g5 g6 ~?= True
 
 -- adj
+test_adj1 :: Test
+test_adj1 = adj g5 8 ~?= fromList [Edge 8 9]
+
+test_adj2 :: Test
+test_adj2 = adj g5 8 ~?= fromList [Edge 7 8]
 
 -- transpose
+test_transpose1 :: Test
+test_transpose1 = transpose g5 ~?= Graph {nodes = fromList [7,8,9],
+                                         edges = fromList [Edge 8 7, Edge 9 8]
+                                        }
+
+test_transpose2 :: Test
+test_transpose2 = transpose g5 ~?= Graph {nodes = fromList [7,8,9],
+                                         edges = fromList [Edge 7 8, Edge 9 8]
+                                         }
 
 -- union
+test_union1 :: Test
+test_union1 = Graph.union g7 g5 ~?= Graph {nodes = fromList [1,2,3,7,8,9],
+                                     edges = fromList [Edge 1 2, Edge 2 3, Edge 7 8, Edge 8 9]
+                                    }
+
+test_union2 :: Test
+test_union2 = Graph.union g7 g5 ~?= Graph {nodes = fromList [1,2,3,7,8,9,10],
+                                     edges = fromList [Edge 1 2, Edge 2 3, Edge 7 8, Edge 8 9]
+                                    }                                    
 
 -- bft
 
 -- reachable
+test_reachable1 :: Test
+test_reachable1 = reachable g5 7 ~?= fromList [7,8,9]
+
+test_reachable2 :: Test
+test_reachable2 = reachable g5 7 ~?= fromList [8,9]
 
 -- isPathOf
 
