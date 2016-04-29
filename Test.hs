@@ -12,13 +12,13 @@
 -- Os 2 alunos do grupo devem também indentificar-se nos comentários abaixo.
 --
 -- Aluno 1
--- Número: A73831
--- Nome: João Pires Barreira
+-- Número: A61855
+-- Nome: Ana Paula Carvalho
 -- Curso: MIEI
 --
 -- Aluno 2
--- Número: A61855
--- Nome: Ana Paula Carvalho
+-- Número: A73831
+-- Nome: João Pires Barreira
 -- Curso: MIEI
 --
 
@@ -29,6 +29,7 @@ import Graph
 import Test.HUnit hiding (path)
 import Test.QuickCheck
 import Data.Set as Set
+import Data.Maybe
 
 --
 -- Teste unitário
@@ -156,8 +157,8 @@ test_adj2 = adj g5 8 ~?= fromList [Edge 7 8]
 -- transpose
 test_transpose1 :: Test
 test_transpose1 = transpose g5 ~?= Graph {nodes = fromList [7,8,9],
-                                         edges = fromList [Edge 8 7, Edge 9 8]
-                                        }
+                                          edges = fromList [Edge 8 7, Edge 9 8]
+                                         }
 
 test_transpose2 :: Test
 test_transpose2 = transpose g5 ~?= Graph {nodes = fromList [7,8,9],
@@ -218,10 +219,11 @@ instance Arbitrary v => Arbitrary (Edge v) where
 
 instance (Ord v, Arbitrary v) => Arbitrary (Graph v) where
     arbitrary = aux `suchThat` isValid
-        where aux = do ns <- arbitrary
-                       es <- arbitrary
-                       return $ Graph {nodes = fromList ns, edges = fromList es}
- 
+        where aux = do es <- arbitrary
+                       return $ Graph {nodes = Set.map source es `Set.union` Set.map target es,
+                                       edges = es
+                                      }
+
 prop_valid :: Graph Int -> Property
 prop_valid g = collect (length (edges g)) $ isValid g
 
@@ -250,8 +252,6 @@ prop_forest = forAll (forest :: Gen (Forest Int)) $ \g -> collect (length (edges
 prop_adj :: Graph Int -> Property
 prop_adj g = forAll (elements $ elems $ nodes g) $ \v -> adj g v `isSubsetOf` edges g
 
--- Deriving Eq
-
 -- swap
 prop_swap :: Edge Int -> Bool
 prop_swap e = source e == target (swap e)
@@ -265,14 +265,24 @@ prop_isEmpty :: Graph Int -> Bool
 prop_isEmpty g = isEmpty g == Set.null (nodes g) || Set.null (edges g)
 
 -- isValid
+prop_isValid :: Graph Int -> Property
+prop_isValid g = isValid g ==> (isValid $ transpose g)
 
 -- isDag
+prop_isDAG :: Graph Int -> Property
+prop_isDAG g = isDAG g ==> (isDAG $ transpose g) && (isValid $ transpose g)
 
 -- isForest
+prop_isForest :: Graph Int -> Property
+prop_isForest g = isForest g ==> isForest $ transpose $ transpose g
 
 -- isSubgraphOf
+prop_isSubgraphOf :: Graph Int -> Graph Int -> Property
+prop_isSubgraphOf g1 g2 = isSubgraphOf g1 g2 ==> isSubgraphOf (transpose g1) (transpose g2)
 
 -- adj
+prop_adj2 :: Graph Int -> Int -> Property
+prop_adj2 g v = (isEmpty g) ==> (toList (adj g v) == [])
 
 -- transpose
 prop_transpose :: Ord v => Graph v -> Bool
@@ -280,21 +290,27 @@ prop_transpose g = size (nodes g) == size (nodes (transpose g))
 
 -- union
 prop_union :: Ord v => Graph v -> Graph v -> Bool
-prop_union g g' = size (nodes (Graph.union g g')) == size (nodes g) + size (nodes g')
+prop_union g g' = nodes g `isSubsetOf` nodes (Graph.union g g') && nodes g' `isSubsetOf` nodes (Graph.union g g')
 
 -- bft
-prop_bft :: Ord v => Graph v -> Set v -> Bool
-prop_bft g s = Set.elems (nodes g) == Set.elems (nodes (bft g s))
+prop_bft :: Graph Int -> Set Int -> Bool
+prop_bft g s = all (\x -> x `member` nodes (bft g s)) s
 
 -- reachable
-prop_reachable :: Ord v => Graph v -> v -> Bool
-prop_reachable g v = if (isEmpty g) then True
-                                    else reachable g v `isSubsetOf` nodes g
+prop_reachable :: Graph Int -> Int -> Bool
+prop_reachable g v = v `member` (reachable g v)
 
 -- isPathOf
+prop_isPathOf :: Graph.Path Int -> Graph Int -> Bool
+prop_isPathOf p g = if (isPathOf p g && p /= []) then not(isEmpty g)
+                                                 else True
 
 -- path
-
+prop_path :: Graph Int -> Int -> Int -> Bool
+prop_path g v v' = if (isJust(path g v v')) then v' `member` reachable g v
+                                            else not(v' `member` reachable g v)
 -- topo
-prop_topo :: Ord v => DAG v -> Bool
-prop_topo d = unions (topo d) == nodes d
+prop_topo :: Graph Int -> Property
+prop_topo g = isDAG g ==> if (isEmpty g)
+                          then topo g == []
+                          else not(and(Prelude.map Set.null (topo g)))
