@@ -4,3 +4,10 @@ Test
 Test.hi
 Test.o
 .hpc/
+Graph.hs.html
+Test.tix
+hpc_index.html
+hpc_index_alt.html
+hpc_index_exp.html
+hpc_index_fun.html
+

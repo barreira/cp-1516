@@ -81,6 +81,20 @@ g7 = Graph {nodes = fromList [1,2,3],
             edges = fromList [Edge 1 2, Edge 2 3]
            }
 
+g8 :: Graph Int
+g8 = Graph {nodes = fromList [],
+            edges = fromList []
+           }
+
+g9 :: Graph Int
+g9 = Graph {nodes = fromList [7,8,9,10,11,12,13],
+            edges = fromList [Edge 7 8, Edge 8 9, Edge 8 10, Edge 9 11, Edge 7 12, Edge 12 13]
+           }
+
+g10 :: Graph Int
+g10 = Graph {nodes = fromList [7,8,9,10,11,12,13],
+            edges = fromList [Edge 12 7, Edge 10 8, Edge 13 12]
+           }
 
 -- Deriving Eq
 test_eq1 :: Test
@@ -92,6 +106,10 @@ test_eq2 = g1 == g2 ~?= False
 -- swap
 test_swap :: Test
 test_swap = swap (Edge 7 9) ~?= (Edge 9 7)
+
+-- empty
+test_empty :: Test
+test_empty = Graph.empty ~?= g8
 
 -- isEmpty
 test_isEmpty1 :: Test
@@ -147,32 +165,32 @@ test_transpose2 = transpose g5 ~?= Graph {nodes = fromList [7,8,9],
                                          }
 
 -- union
-test_union1 :: Test
-test_union1 = Graph.union g7 g5 ~?= Graph {nodes = fromList [1,2,3,7,8,9],
-                                     edges = fromList [Edge 1 2, Edge 2 3, Edge 7 8, Edge 8 9]
-                                    }
-
-test_union2 :: Test
-test_union2 = Graph.union g7 g5 ~?= Graph {nodes = fromList [1,2,3,7,8,9,10],
-                                     edges = fromList [Edge 1 2, Edge 2 3, Edge 7 8, Edge 8 9]
-                                    }                                    
+test_union :: Test
+test_union = Graph.union g7 g5 ~?= Graph {nodes = fromList [1,2,3,7,8,9],
+                                          edges = fromList [Edge 1 2, Edge 2 3, Edge 7 8, Edge 8 9]
+                                         }                                 
 
 -- bft
+test_bft :: Test
+test_bft = bft g9 (fromList [7,8,9,11]) ~?= g10
 
 -- reachable
-test_reachable1 :: Test
-test_reachable1 = reachable g5 7 ~?= fromList [7,8,9]
-
-test_reachable2 :: Test
-test_reachable2 = reachable g5 7 ~?= fromList [8,9]
+test_reachable :: Test
+test_reachable = reachable g5 7 ~?= fromList [7,8,9]
 
 -- isPathOf
+test_isPathOf :: Test
+test_isPathOf = isPathOf [Edge 7 8, Edge 8 10] g9 ~?= True
 
 -- path
+test_path :: Test
+test_path = path g9 7 10 ~?= Just [Edge 7 8, Edge 8 10]
 
 -- topo
+test_topo :: Test
+test_topo = topo g9 ~?= [fromList [7], fromList [8,12], fromList [9,10,13], fromList [11]]
 
-main = runTestTT $ TestList [test_adj]
+main = runTestTT $ TestList [test_adj, test_eq1, test_eq2, test_swap, test_empty, test_isEmpty1, test_isEmpty2, test_isValid1, test_isValid2, test_isDAG1, test_isDAG2, test_isForest1, test_isForest2, test_isSubgraphOf1, test_isSubgraphOf2, test_adj1, test_adj2, test_transpose1, test_transpose2, test_union, test_reachable, test_bft, test_isPathOf, test_path, test_topo]
 
 --
 -- Teste aleatório
@@ -231,3 +249,52 @@ prop_forest = forAll (forest :: Gen (Forest Int)) $ \g -> collect (length (edges
 -- Exemplo de uma propriedade QuickCheck para testar a função adj          
 prop_adj :: Graph Int -> Property
 prop_adj g = forAll (elements $ elems $ nodes g) $ \v -> adj g v `isSubsetOf` edges g
+
+-- Deriving Eq
+
+-- swap
+prop_swap :: Edge Int -> Bool
+prop_swap e = source e == target (swap e)
+
+-- empty
+prop_empty :: Bool
+prop_empty = Set.null (nodes Graph.empty)
+
+-- isEmpty
+prop_isEmpty :: Graph Int -> Bool
+prop_isEmpty g = isEmpty g == Set.null (nodes g) || Set.null (edges g)
+
+-- isValid
+
+-- isDag
+
+-- isForest
+
+-- isSubgraphOf
+
+-- adj
+
+-- transpose
+prop_transpose :: Ord v => Graph v -> Bool
+prop_transpose g = size (nodes g) == size (nodes (transpose g))
+
+-- union
+prop_union :: Ord v => Graph v -> Graph v -> Bool
+prop_union g g' = size (nodes (Graph.union g g')) == size (nodes g) + size (nodes g')
+
+-- bft
+prop_bft :: Ord v => Graph v -> Set v -> Bool
+prop_bft g s = Set.elems (nodes g) == Set.elems (nodes (bft g s))
+
+-- reachable
+prop_reachable :: Ord v => Graph v -> v -> Bool
+prop_reachable g v = if (isEmpty g) then True
+                                    else reachable g v `isSubsetOf` nodes g
+
+-- isPathOf
+
+-- path
+
+-- topo
+prop_topo :: Ord v => DAG v -> Bool
+prop_topo d = unions (topo d) == nodes d
