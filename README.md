@@ -1,5 +1,4 @@
-CP
-==
+# CP
 
 Trabalho prático da U.C. de Cálculo de Programas (2015/2016)
 
